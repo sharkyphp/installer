@@ -1,0 +1,155 @@
+<?php
+/**
+ * SharkyPHP Project
+ *
+ * 框架服务器启动文件
+ *
+ * @package SharkyPHP\\Framework
+ * @author Sharky
+ * @copyright 2026 SharkyPHP
+ * @license MIT
+ * @version 2.0.0
+ * @internal
+ */
+declare (strict_types = 1);
+
+use Sharky\Runtime\Swoole\Server as SwooleServer;
+
+final class Serve
+{
+    private const HOST           = '127.0.0.1';
+    private const PORT           = 8000;
+    private const MAX_PORT_TRIES = 100;
+    private const PUBLIC_DIR     = 'public';
+    private const ROUTER_FILE    = 'public/index.php';
+
+    public static function launch(string $serve, string $workDir): void
+    {
+        try {
+            match ($serve) {
+                'dev', '' => self::runDevServer($workDir),
+                'swoole'  => self::runSwooleServer($workDir),
+                default   => self::invalidServeType($serve),
+            };
+        } catch (RuntimeException $e) {
+            // 启动失败属于可预期错误（端口耗尽 / 路径缺失 / 扩展未装），
+            // 给一行可读提示即可，不必把带绝对路径的堆栈甩给使用者
+            fwrite(STDERR, 'sharky serve: ' . $e->getMessage() . PHP_EOL);
+            exit(1);
+        }
+    }
+
+    private static function invalidServeType(string $serve): void
+    {
+        fwrite(STDERR, sprintf('Invalid serve type: %s', $serve) . PHP_EOL);
+        fwrite(STDERR, 'Usage: php serve [dev|swoole]' . PHP_EOL);
+        exit(1);
+    }
+
+    private static function runDevServer(string $workDir): void
+    {
+        $port      = self::findAvailablePort(self::PORT, self::MAX_PORT_TRIES);
+        $publicDir = self::resolvePath($workDir, self::PUBLIC_DIR);
+        $router    = self::resolvePath($workDir, self::ROUTER_FILE);
+
+        // 端口可能自动顺延，这里显式打印真实地址，避免"起了服务却不知道在哪个端口"
+        fwrite(STDOUT, sprintf('SharkyPHP dev server: http://%s:%d', self::HOST, $port) . PHP_EOL);
+        fwrite(STDOUT, sprintf('docroot: %s', $publicDir) . PHP_EOL);
+        fwrite(STDOUT, 'Press Ctrl+C to stop.' . PHP_EOL);
+
+        self::runProcess([
+            // 用 PHP_BINARY 而不是裸 'php'：从绝对路径启动时子进程也一定是同一个解释器
+            PHP_BINARY,
+            '-S',
+            sprintf('%s:%d', self::HOST, $port),
+            '-t',
+            $publicDir,
+            $router,
+        ], $workDir);
+    }
+
+    private static function runSwooleServer(string $workDir): void
+    {
+        $autoload = $workDir . '/vendor/autoload.php';
+        if (! is_file($autoload)) {
+            throw new RuntimeException('Composer autoload not found, run `composer install` first.');
+        }
+        require_once $autoload;
+
+        if (! extension_loaded('swoole')) {
+            throw new RuntimeException('Swoole extension is not loaded. Please install and enable it.');
+        }
+        if (! class_exists(SwooleServer::class)) {
+            throw new RuntimeException('Swoole runtime not found. Please install sharkyphp/runtime-swoole.');
+        }
+
+        SwooleServer::launch($workDir);
+    }
+
+    /**
+     * 以数组形式传命令：不经过 shell 解析，项目路径含空格（如 C:\Users\John Doe\app）也无需手工加引号
+     */
+    private static function runProcess(array $command, string $cwd): int
+    {
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['redirect', 1],
+            2 => ['redirect', 2],
+        ];
+
+        $proc = proc_open($command, $descriptors, $pipes, $cwd);
+        if ($proc === false) {
+            throw new RuntimeException(sprintf('Failed to start command: %s', implode(' ', $command)));
+        }
+
+        // 子进程不需要 stdin，关闭以防挂起
+        if (isset($pipes[0]) && is_resource($pipes[0])) {
+            fclose($pipes[0]);
+        }
+
+        return proc_close($proc);
+    }
+
+    private static function findAvailablePort(int $start, int $maxTries): int
+    {
+        for ($port = $start; $port < $start + $maxTries; $port++) {
+            if (self::isPortFree($port)) {
+                return $port;
+            }
+        }
+
+        throw new RuntimeException(
+            sprintf('No available port found (tried %d ports from %d).', $maxTries, $start)
+        );
+    }
+
+    /**
+     * 用 connect 探测端口占用，而不是 bind。
+     * stream_socket_server 默认带 SO_REUSEADDR，在 Windows 上可以重复绑定已被监听的端口，
+     * 导致"总是判定 8000 空闲"（多个实例会一起抢 8000）；connect 成功才说明端口被占用。
+     */
+    private static function isPortFree(int $port): bool
+    {
+        $socket = @fsockopen(self::HOST, $port, $errno, $errstr, 0.2);
+        if ($socket === false) {
+            return true;
+        }
+
+        fclose($socket);
+
+        return false;
+    }
+
+    private static function resolvePath(string $base, string $path): string
+    {
+        $real = realpath($base . DIRECTORY_SEPARATOR . $path);
+        if ($real === false) {
+            throw new RuntimeException(sprintf('Path not found: %s', $path));
+        }
+        return $real;
+    }
+}
+
+$serve      = $argv[1] ?? '';
+$projectDir = realpath(__DIR__);
+Serve::launch($serve, $projectDir);

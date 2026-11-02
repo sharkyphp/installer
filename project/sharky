@@ -1,0 +1,31 @@
+<?php
+/**
+ * SharkyPHP Project
+ *
+ * CLI 入口文件
+ *
+ * @package SharkyPHP\\Framework
+ * @author Sharky
+ * @copyright 2026 SharkyPHP
+ * @license MIT
+ * @version 2.0.0
+ * @internal
+ */
+declare (strict_types = 1);
+
+use Sharky\Foundation\Kernel\ConsoleKernel;
+
+define('SHARKY_START', microtime(true));
+
+// 启动框架
+$app = require_once __DIR__ . "/bootstrap.php";
+$app->bootstrap();
+
+// 启动Console核心
+$kernel = ConsoleKernel::launch();
+
+// 处理Console命令
+$kernel->handleConsole($argv);
+
+// 执行终止程序
+$kernel->terminate();

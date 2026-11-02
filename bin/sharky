@@ -1,0 +1,37 @@
+#!/usr/bin/env php
+<?php
+/**
+ * SharkyPHP Installer Library
+ *
+ * 安装器 CLI 入口
+ *
+ * 自动加载器定位顺序：
+ * 1. Composer bin 代理注入的 _composer_autoload_path（vendor/bin/sharky）
+ * 2. 作为依赖安装时向上找 vendor/autoload.php
+ * 3. 包内自带 vendor（开发调试）
+ */
+
+$autoload = null;
+
+if (isset($GLOBALS['_composer_autoload_path']) && is_file($GLOBALS['_composer_autoload_path'])) {
+    $autoload = $GLOBALS['_composer_autoload_path'];
+} else {
+    // __DIR__ 会被解析为真实路径，path 仓库符号链接/联接下第 3 层即项目 vendor 目录
+    foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $candidate) {
+        if (is_file($candidate)) {
+            $autoload = $candidate;
+            break;
+        }
+    }
+}
+
+if ($autoload === null) {
+    fwrite(STDERR, "Composer autoload not found. Run `composer install` first." . PHP_EOL);
+    exit(1);
+}
+
+require $autoload;
+
+$app = new Sharky\Installer\Application();
+
+exit($app->run());

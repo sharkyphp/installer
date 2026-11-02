@@ -1,0 +1,23 @@
+{
+    "name": "{{ name }}",
+    "description": "{{ description }}",
+    "type": "project",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app"
+        }
+    },
+    "authors": [
+        {
+            "name": "{{ author_name }}",
+            "email": "{{ author_email }}"
+        }
+    ],
+    "require": {
+        "sharkyphp/foundation": "^2.0.0"
+    },
+    "require-dev": {
+        "sharkyphp/skeleton": "^2.0.0"
+    }{{ repositories }}
+}
