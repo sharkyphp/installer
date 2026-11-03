@@ -64,6 +64,25 @@ return [
                 "X-Token",
             ],
 
+            /**
+             * 允许的跨域来源白名单（数组），元素为来源模式，支持 * 通配：
+             *   'http://127.0.0.1:*'   => 127.0.0.1 任意端口
+             *   'http://localhost:*'    => localhost 任意端口
+             *   'https://*.doffish.com' => doffish.com 任意子域
+             * 命中后框架会在响应头回显请求来源（Access-Control-Allow-Origin），
+             * 未配置或请求来源不在白名单内则不输出该响应头。留空数组等同于禁用跨域。
+             */
+            'whitelist' => [
+                'http://127.0.0.1:*',
+                'http://localhost:*',
+            ],
+
+            // 是否允许跨域凭据（Cookie / Authorization 等），默认 false
+            // 前端若使用 withCredentials: true（credentials: 'include'），必须设为 true，
+            // 否则预检响应缺少 Access-Control-Allow-Credentials 头，浏览器会拦截跨域请求。
+            // 开启后 Access-Control-Allow-Origin 必须为具体来源（框架会回显请求来源，不会用 *），符合要求。
+            'allow-credentials' => false,
+
             // Allow-Methods 自动预检根据路由生成（框架不读取此配置）
             'allow-methods' => [],
         ],

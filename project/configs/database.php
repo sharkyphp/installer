@@ -16,6 +16,7 @@ return [
         'database'   => env('DB_DATABASE', 'sharky'),
         'prefix'     => env('DB_PREFIX', ''),
         'charset'    => env('DB_CHARSET', 'utf8mb4'),
+        'native_types' => filter_var(env('DB_NATIVE_TYPES', true), FILTER_VALIDATE_BOOLEAN),
         'persistent' => filter_var(env('DB_PERSISTENT', false), FILTER_VALIDATE_BOOLEAN),
         'hosts'      => [
             'master' => [

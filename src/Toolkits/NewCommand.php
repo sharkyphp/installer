@@ -79,7 +79,10 @@ final class NewCommand
         }
         $this->output->successLn("Copied example project scaffold.");
 
-        // 3. 生成 composer.json（示例项目不含，从 stub 渲染；模板内已存在则保留）
+        // 3. 从 stub 生成 .env（示例项目不含，模板内已存在则保留；.env 在 .gitignore 中故不随模板复制）
+        $this->copyEnvStub($projectDir);
+
+        // 4. 生成 composer.json（示例项目不含，从 stub 渲染；模板内已存在则保留）
         $composerPath = $projectDir . DIRECTORY_SEPARATOR . 'composer.json';
         if (! is_file($composerPath)) {
             $stub    = file_get_contents($this->getStub());
@@ -96,14 +99,14 @@ final class NewCommand
             $this->output->infoLn("composer.json already present in template, kept as-is.");
         }
 
-        // 4. 安装依赖
+        // 5. 安装依赖
         if ($noInstall) {
             $this->output->warnLn("Skipped composer install (--no-install).");
         } else {
             $this->runProcess('composer install', $projectDir);
         }
 
-        // 5. 初始化 git 并创建分支
+        // 6. 初始化 git 并创建分支
         if ($noGit) {
             $this->output->warnLn("Skipped git initialization (--no-git).");
         } else {
@@ -129,6 +132,40 @@ final class NewCommand
     private function getStub(): string
     {
         return __DIR__ . '/../../stubs/composer.stubs';
+    }
+
+    // 读取 .env stub 模板路径
+    private function getEnvStub(): string
+    {
+        return __DIR__ . '/../../stubs/.env.stubs';
+    }
+
+    /**
+     * 从 stub 为新项目生成 .env。
+     *
+     * .env 在 .gitignore 中，且示例项目模板内不携带它，所以不会随
+     * copyDirectory() 被复制。这里单独从 stubs/.env.stubs 复制成目标
+     * 目录下的 .env。若目标已存在 .env 则保留，避免覆盖用户已有配置。
+     */
+    private function copyEnvStub(string $projectDir): void
+    {
+        $src = $this->getEnvStub();
+        if (! is_file($src)) {
+            $this->output->warnLn("Env stub not found, skipped: {$src}");
+            return;
+        }
+
+        $dst = $projectDir . DIRECTORY_SEPARATOR . '.env';
+        if (is_file($dst)) {
+            $this->output->infoLn(".env already exists, kept as-is.");
+            return;
+        }
+
+        if (! @copy($src, $dst)) {
+            $this->output->warnLn("Failed to copy .env stub to: {$dst}");
+            return;
+        }
+        $this->output->successLn("Created .env from stub (edit it to configure your app).");
     }
 
     /**
