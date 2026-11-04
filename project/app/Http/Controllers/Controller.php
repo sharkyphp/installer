@@ -7,7 +7,6 @@
  * 提供 view() 方法：从 app/Http/Views 读取并渲染视图文件。
  *
  * @author Sharky
- * @version 2.0.0
  */
 declare (strict_types = 1);
 
