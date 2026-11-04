@@ -19,6 +19,7 @@
     ],
     "require": {
         "php": ">=8.2",
+        "composer-runtime-api": "^2.0",
         "sharkyphp/annotation": "^2.0.0"
     },
     "archive": {

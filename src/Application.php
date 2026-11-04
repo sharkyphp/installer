@@ -14,10 +14,37 @@ declare (strict_types = 1);
 
 namespace Sharky\Installer;
 
+use Composer\InstalledVersions;
+
 final class Application
 {
     const COMMAND = 'sharky';
-    const VERSION = '2.0.0';
+
+    /**
+     * Resolved installer version (lazy). Inferred at runtime from the
+     * installed Composer package so releases need no manual version edits.
+     */
+    private static ?string $version = null;
+
+    public static function version(): string
+    {
+        if (self::$version === null) {
+            self::$version = self::resolveVersion();
+        }
+        return self::$version;
+    }
+
+    private static function resolveVersion(): string
+    {
+        if (class_exists(InstalledVersions::class)
+            && InstalledVersions::isInstalled('sharkyphp/installer')) {
+            $v = InstalledVersions::getPrettyVersion('sharkyphp/installer');
+            if (is_string($v) && $v !== '') {
+                return $v;
+            }
+        }
+        return 'dev';
+    }
     private Input $input;
     private Output $output;
     private array $commands;
@@ -43,7 +70,7 @@ final class Application
             $this->showAvailable();
             return 0;
         } else if ($command === '--version' || $command === '-v') {
-            $this->output->writeln("SharkyPHP Installer (" . self::COMMAND . ") - version " . self::VERSION);
+            $this->output->writeln("SharkyPHP Installer (" . self::COMMAND . ") - version " . self::version());
             return 0;
         }
 

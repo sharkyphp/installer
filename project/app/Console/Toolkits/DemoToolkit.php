@@ -31,7 +31,7 @@ EOT;
         $out->debugLn(sprintf("%s\n", $hello));
         $out->infoLn(sprintf("%s:    %s", 'Author', Application::AUTHOR));
         $out->infoLn(sprintf("%s:   %s", 'Project', Application::PROJECT));
-        $out->infoLn(sprintf("%s:   %s", 'Version', Application::VERSION));
+        $out->infoLn(sprintf("%s:   %s", 'Version', Application::version()));
         $out->infoLn(sprintf(Application::COPYRIGHT, Clock::now()->format('Y')));
         $out->infoLn("");
     }
