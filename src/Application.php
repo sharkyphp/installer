@@ -18,6 +18,7 @@ namespace Sharky\Installer;
 final class Application
 {
     const COMMAND = 'sharky';
+    const VERSION = '2.0.0';
     private Input $input;
     private Output $output;
     private array $commands;
@@ -39,14 +40,19 @@ final class Application
         $command = $this->input->getCommand();
 
         // 无命令或显式 list/help 时展示可用命令
-        if ($command === '' || $command === 'list' || $command === 'help') {
+        if ($command === '' || $command === '--list' || $command === '--help' || $command === '-h') {
             $this->showAvailable();
+            return 0;
+        } else if ($command === '--version' || $command === '-v') {
+            $this->output->writeln("SharkyPHP Installer (" . self::COMMAND . ") - version " . self::VERSION);
             return 0;
         }
 
         if (! isset($this->commands[$command])) {
             $this->output->errorLn("Command not found: {$command}");
             $this->output->writeln('');
+            $this->output->writeln("Usage: sharky [--help|-h|--list|--version|-v] <command> [<args>]");
+
             $this->showAvailable();
             return 1;
         }

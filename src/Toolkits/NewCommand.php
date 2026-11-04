@@ -33,8 +33,14 @@ final class NewCommand
         if (! $name) {
             $this->output->errorLn("Missing project name.");
             $this->output->writeln("Usage: sharky new <vendor/name|name> [--dir=PATH] [--branch=NAME] [--desc=TEXT] [--author-name=NAME] [--author-email=EMAIL] [--no-install] [--no-git]");
-            $this->output->writeln("  <name>          package name; a bare name is prefixed with 'project/' (-> project/blog)");
-            $this->output->writeln("  --dir=PATH      target directory; defaults to ./<last segment of name>");
+            $this->output->writeln("  <name>                package name; a bare name is prefixed with 'project/' (-> project/blog)");
+            $this->output->writeln("  --dir=PATH            target directory; defaults to ./<last segment of name>");
+            $this->output->writeln("  --branch=NAME         default git branch name");
+            $this->output->writeln("  --desc=TEXT           package description");
+            $this->output->writeln("  --author-name=NAME    author full name");
+            $this->output->writeln("  --author-email=EMAIL  author email address");
+            $this->output->writeln("  --no-install          skip composer install");
+            $this->output->writeln("  --no-git              skip git init");
             return;
         }
 
@@ -178,7 +184,7 @@ final class NewCommand
      */
     private function repositoriesJson(string $projectDir): string
     {
-        $packagesDir = dirname(__DIR__, 3);   // .../framework/packages
+        $packagesDir = '.../sharkyphp/packages';
         if (! is_dir($packagesDir)) {
             return '';
         }
@@ -224,7 +230,7 @@ final class NewCommand
     // 计算 $from 到 $to 的相对路径（盘符不同则退回绝对路径）
     private function relativePath(string $from, string $to): string
     {
-        $norm = static fn(string $p): array => explode('/', trim(str_replace('\\', '/', $p), '/'));
+        $norm = static fn(string $p): array=> explode('/', trim(str_replace('\\', '/', $p), '/'));
         $f    = $norm($from);
         $t    = $norm($to);
 
