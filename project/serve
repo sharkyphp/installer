@@ -76,8 +76,8 @@ final class Serve
         }
         require_once $autoload;
 
-        if (! extension_loaded('swoole')) {
-            throw new RuntimeException('Swoole extension is not loaded. Please install and enable it.');
+        if (! extension_loaded('openswoole')) {
+            throw new RuntimeException('OpenSwoole extension is not loaded. Please install and enable it.');
         }
         if (! class_exists(SwooleServer::class)) {
             throw new RuntimeException('Swoole runtime not found. Please install sharkyphp/runtime-swoole.');
