@@ -29,10 +29,10 @@ EOT;
         $out = new Output();
         $out->setVerbosity(Output::VERBOSITY_DEBUG);
         $out->debugLn(sprintf("%s\n", $hello));
-        $out->infoLn(sprintf("%s:    %s", 'Author', Application::AUTHOR));
-        $out->infoLn(sprintf("%s:   %s", 'Project', Application::PROJECT));
+        $out->infoLn(sprintf("%s:    %s", 'Author', Application::author()));
+        $out->infoLn(sprintf("%s:   %s", 'Project', Application::project()));
         $out->infoLn(sprintf("%s:   %s", 'Version', Application::version()));
-        $out->infoLn(sprintf(Application::COPYRIGHT, Clock::now()->format('Y')));
+        $out->infoLn(sprintf("%s", Application::copyright()));
         $out->infoLn("");
     }
 }
